@@ -8,7 +8,7 @@ const Login = ({ setToken }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post('http://127.0.0.1:8000/api/token/', credentials);
+            const res = await axios.post('https://finance-api-2-fikd.onrender.com', credentials);
             const token = res.data.access;
             localStorage.setItem('token', token); // On stocke le jeton dans le navigateur
             setToken(token); // On informe l'application qu'on est connecté

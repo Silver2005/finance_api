@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 // On récupère l'URL dynamique (Localhost ou Render)
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
 
 const AjoutDette = ({ onDetteAdded }) => {
     const [formData, setFormData] = useState({

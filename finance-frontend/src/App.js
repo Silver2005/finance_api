@@ -8,7 +8,7 @@ import autoTable from 'jspdf-autotable';
 import { Toaster, toast } from 'react-hot-toast';
 
 // Définition de l'URL de l'API (Dynamique)
-const API_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
 
 function App() {
   const [analyse, setAnalyse] = useState({ 
