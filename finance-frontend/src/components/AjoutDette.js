@@ -23,7 +23,7 @@ const AjoutDette = ({ onDetteAdded }) => {
         };
 
         // Utilisation de la variable API_URL
-        axios.post(`${API_URL}/dettes/`, dataToSend)
+        axios.post(`${API_URL}/api/dettes/`, dataToSend)
         .then(() => {
             toast.success("🤝 Dette enregistrée !");
             

@@ -26,7 +26,7 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
         };
 
         // Utilisation de la variable API_URL ici
-        axios.post(`${API_URL}/transactions/`, payload)
+        axios.post(`${API_URL}/api/transactions/`, payload)
             .then(() => {
                 toast.success("Opération enregistrée ! 📈");
                 
