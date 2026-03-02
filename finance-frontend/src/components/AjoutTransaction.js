@@ -3,7 +3,6 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast'; 
 
 // --- PROTECTION URL ---
-// On récupère l'URL et on retire tout slash final pour éviter les erreurs 404 (//api)
 const RAW_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
 const API_URL = RAW_URL.replace(/\/+$/, ""); 
 
@@ -19,30 +18,43 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Préparation propre des données
+        // 1. On convertit et on nettoie le montant avant l'envoi
+        const montantNettoye = parseFloat(formData.montant);
+
+        // 2. Sécurité : Si le montant n'est pas un nombre valide, on arrête tout
+        if (isNaN(montantNettoye) || montantNettoye <= 0) {
+            toast.error("Veuillez saisir un montant valide (ex: 5000)");
+            return;
+        }
+        
         const payload = {
             type: formData.type,
-            montant: parseFloat(formData.montant),
-            description: formData.description,
+            montant: montantNettoye, // Nombre pur (ex: 5000.0)
+            description: formData.description.trim(),
             categorie: formData.categorie,
             date_operation: formData.date_operation
         };
 
-        // Appel API avec l'URL nettoyée et le slash final exigé par Django
+        // Appel API
         axios.post(`${API_URL}/api/transactions/`, payload)
             .then(() => {
                 toast.success("Opération enregistrée ! 📈");
                 
-                // On vide le montant et la description mais on garde le reste pour la saisie suivante
+                // Reset du formulaire (on garde le type et la date par défaut)
                 setFormData({ ...formData, montant: '', description: '' });
                 
-                // On rafraîchit la liste globale
                 if (onTransactionAdded) onTransactionAdded(); 
             })
             .catch(err => {
-                // On affiche l'erreur détaillée en console pour débugger plus vite
-                console.error("Détails Erreur Backend :", err.response?.data || err.message);
-                toast.error("Erreur : Impossible d'enregistrer l'opération.");
+                // Affichage précis de l'erreur du serveur dans la console
+                console.error("Détails Erreur Backend :", err.response?.data);
+                
+                // Si le serveur renvoie une erreur spécifique sur le montant
+                if (err.response?.data?.montant) {
+                    toast.error(`Erreur Montant : ${err.response.data.montant[0]}`);
+                } else {
+                    toast.error("Erreur : Impossible d'enregistrer l'opération.");
+                }
             });
     };
 
@@ -75,6 +87,7 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
 
                 <input 
                     type="number" 
+                    step="any" // Permet les décimales si besoin
                     placeholder="Montant (FCFA)" 
                     value={formData.montant}
                     required 
