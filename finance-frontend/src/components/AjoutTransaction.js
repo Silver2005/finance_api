@@ -18,44 +18,48 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // 1. On convertit et on nettoie le montant avant l'envoi
-        const montantNettoye = parseFloat(formData.montant);
+        // 1. On convertit le montant en nombre
+        const montantSaisi = parseFloat(formData.montant);
 
-        // 2. Sécurité : Si le montant n'est pas un nombre valide, on arrête tout
-        if (isNaN(montantNettoye) || montantNettoye <= 0) {
-            toast.error("Veuillez saisir un montant valide (ex: 5000)");
+        // 2. Sécurité : Vérification avant envoi
+        if (isNaN(montantSaisi) || montantSaisi <= 0) {
+            toast.error("Veuillez saisir un montant valide.");
             return;
         }
         
+        // 3. Préparation du payload avec ARRONDI (pour éviter les .0000001 et les bugs du backend)
         const payload = {
             type: formData.type,
-            montant: montantNettoye, // Nombre pur (ex: 5000.0)
+            montant: Math.round(montantSaisi), // On envoie un entier propre (ex: 5000)
             description: formData.description.trim(),
             categorie: formData.categorie,
             date_operation: formData.date_operation
         };
 
-        // Appel API
-        axios.post(`${API_URL}/api/transactions/`, payload)
-            .then(() => {
-                toast.success("Opération enregistrée ! 📈");
-                
-                // Reset du formulaire (on garde le type et la date par défaut)
-                setFormData({ ...formData, montant: '', description: '' });
-                
-                if (onTransactionAdded) onTransactionAdded(); 
-            })
-            .catch(err => {
-                // Affichage précis de l'erreur du serveur dans la console
-                console.error("Détails Erreur Backend :", err.response?.data);
-                
-                // Si le serveur renvoie une erreur spécifique sur le montant
-                if (err.response?.data?.montant) {
-                    toast.error(`Erreur Montant : ${err.response.data.montant[0]}`);
-                } else {
-                    toast.error("Erreur : Impossible d'enregistrer l'opération.");
-                }
-            });
+        // 4. Appel API avec configuration de headers pour éviter les rejets CORS
+        axios.post(`${API_URL}/api/transactions/`, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(() => {
+            toast.success("Opération enregistrée ! 📈");
+            
+            // Reset intelligent : on garde le type, la catégorie et la date
+            setFormData({ ...formData, montant: '', description: '' });
+            
+            if (onTransactionAdded) onTransactionAdded(); 
+        })
+        .catch(err => {
+            console.error("Détails Erreur Backend :", err.response?.data || err.message);
+            
+            // Message d'erreur spécifique si le backend renvoie un problème de validation
+            if (err.response?.data?.montant) {
+                toast.error(`Erreur : ${err.response.data.montant[0]}`);
+            } else {
+                toast.error("Erreur : Impossible de contacter le serveur.");
+            }
+        });
     };
 
     return (
@@ -87,8 +91,7 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
 
                 <input 
                     type="number" 
-                    step="any" // Permet les décimales si besoin
-                    placeholder="Montant (FCFA)" 
+                    placeholder="Montant (ex: 5000)" 
                     value={formData.montant}
                     required 
                     style={inputStyle}
