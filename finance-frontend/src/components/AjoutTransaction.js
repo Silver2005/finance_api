@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast'; 
 
-// Récupération de l'URL dynamique
-const API_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
+// --- PROTECTION URL ---
+// On récupère l'URL et on retire tout slash final pour éviter les erreurs 404 (//api)
+const RAW_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
+const API_URL = RAW_URL.replace(/\/+$/, ""); 
 
 const AjoutTransaction = ({ onTransactionAdded }) => {
     const [formData, setFormData] = useState({
@@ -17,6 +19,7 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         
+        // Préparation propre des données
         const payload = {
             type: formData.type,
             montant: parseFloat(formData.montant),
@@ -25,17 +28,20 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
             date_operation: formData.date_operation
         };
 
-        // Utilisation de la variable API_URL ici
+        // Appel API avec l'URL nettoyée et le slash final exigé par Django
         axios.post(`${API_URL}/api/transactions/`, payload)
             .then(() => {
                 toast.success("Opération enregistrée ! 📈");
                 
-                // Reset partiel : on garde le type et la catégorie pour gagner du temps
+                // On vide le montant et la description mais on garde le reste pour la saisie suivante
                 setFormData({ ...formData, montant: '', description: '' });
-                onTransactionAdded(); 
+                
+                // On rafraîchit la liste globale
+                if (onTransactionAdded) onTransactionAdded(); 
             })
             .catch(err => {
-                console.error("Erreur Backend :", err.response?.data);
+                // On affiche l'erreur détaillée en console pour débugger plus vite
+                console.error("Détails Erreur Backend :", err.response?.data || err.message);
                 toast.error("Erreur : Impossible d'enregistrer l'opération.");
             });
     };
@@ -85,7 +91,12 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
                     onChange={(e) => setFormData({...formData, description: e.target.value})} 
                 />
 
-                <button type="submit" style={buttonStyle}>
+                <button 
+                    type="submit" 
+                    style={buttonStyle}
+                    onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+                    onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+                >
                     Enregistrer l'opération
                 </button>
             </form>
@@ -93,9 +104,33 @@ const AjoutTransaction = ({ onTransactionAdded }) => {
     );
 };
 
-// Styles maintenus
-const containerStyle = { padding: '20px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' };
-const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.95em' };
-const buttonStyle = { backgroundColor: '#28a745', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'background 0.3s' };
+// --- STYLES ---
+const containerStyle = { 
+    padding: '20px', 
+    backgroundColor: '#fff', 
+    borderRadius: '12px', 
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+    border: '1px solid #e2e8f0'
+};
+
+const inputStyle = { 
+    padding: '12px', 
+    borderRadius: '8px', 
+    border: '1px solid #e2e8f0', 
+    outline: 'none', 
+    fontSize: '0.95em',
+    backgroundColor: '#f8fafc'
+};
+
+const buttonStyle = { 
+    backgroundColor: '#28a745', 
+    color: 'white', 
+    border: 'none', 
+    padding: '12px', 
+    borderRadius: '8px', 
+    cursor: 'pointer', 
+    fontWeight: 'bold', 
+    transition: 'background 0.3s' 
+};
 
 export default AjoutTransaction;

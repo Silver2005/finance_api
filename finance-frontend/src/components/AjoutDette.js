@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-// On récupère l'URL dynamique (Localhost ou Render)
-const API_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
+// Sécurité : on retire les slashs à la fin de l'URL de base s'ils existent
+const RAW_URL = process.env.REACT_APP_API_URL || 'https://finance-api-2-fikd.onrender.com';
+const API_URL = RAW_URL.replace(/\/+$/, ""); 
 
 const AjoutDette = ({ onDetteAdded }) => {
     const [formData, setFormData] = useState({
@@ -22,12 +23,10 @@ const AjoutDette = ({ onDetteAdded }) => {
             est_paye: false
         };
 
-        // Utilisation de la variable API_URL
+        // URL Propre : plus de risque de //api
         axios.post(`${API_URL}/api/dettes/`, dataToSend)
         .then(() => {
             toast.success("🤝 Dette enregistrée !");
-            
-            // Reset du formulaire
             setFormData({ 
                 client: '', 
                 montant: '', 
@@ -36,13 +35,13 @@ const AjoutDette = ({ onDetteAdded }) => {
             onDetteAdded(); 
         })
         .catch(err => {
-            console.error("Erreur lors de l'ajout :", err);
+            console.error("Détails erreur:", err.response?.data);
             toast.error("Impossible d'enregistrer la dette.");
         });
     };
 
     return (
-        <div style={containerStyle}>
+        <div style={{ padding: '20px', backgroundColor: '#fffbe6', borderRadius: '12px', border: '1px solid #ffe58f' }}>
             <h3 style={{ color: '#856404', marginTop: 0 }}>🤝 Enregistrer un Impayé</h3>
             <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
                 <input 
@@ -50,7 +49,7 @@ const AjoutDette = ({ onDetteAdded }) => {
                     value={formData.client} 
                     required 
                     onChange={e => setFormData({...formData, client: e.target.value})} 
-                    style={inputStyle} 
+                    style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} 
                 />
                 <div style={{ display: 'flex', gap: '10px' }}>
                     <input 
@@ -59,25 +58,22 @@ const AjoutDette = ({ onDetteAdded }) => {
                         value={formData.montant} 
                         required 
                         onChange={e => setFormData({...formData, montant: e.target.value})} 
-                        style={{ ...inputStyle, flex: 1 }} 
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', flex: 1 }} 
                     />
                     <input 
                         type="date" 
                         value={formData.date_echeance} 
                         required 
                         onChange={e => setFormData({...formData, date_echeance: e.target.value})} 
-                        style={{ ...inputStyle, flex: 1 }} 
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', flex: 1 }} 
                     />
                 </div>
-                <button type="submit" style={buttonStyle}>Enregistrer la Dette</button>
+                <button type="submit" style={{ backgroundColor: '#856404', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    Enregistrer la Dette
+                </button>
             </form>
         </div>
     );
 };
-
-// Styles (inchangés)
-const containerStyle = { padding: '20px', backgroundColor: '#fffbe6', borderRadius: '12px', border: '1px solid #ffe58f' };
-const inputStyle = { padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' };
-const buttonStyle = { backgroundColor: '#856404', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
 
 export default AjoutDette;
